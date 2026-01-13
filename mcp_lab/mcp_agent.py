@@ -18,6 +18,8 @@ from ..llm_prompt.prompt_config import MCP_AGENT_PROMPTS
 from ..llm_prompt.model_config import MODEL_PROVIDERS
 
 def check_all_agent_app():
+    st.set_page_config(page_title="Agent with MCP Tools", page_icon="🧠", layout="wide")
+
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
@@ -33,7 +35,7 @@ def check_all_agent_app():
     load_dotenv(override=True)
 
     # config.json file path setting
-    CONFIG_FILE_PATH = "config.json"
+    CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), "config.json")
 
     # Function to load settings from JSON file
     def load_config_from_json():
@@ -88,12 +90,18 @@ def check_all_agent_app():
             st.error(f"Error saving settings file: {str(e)}")
             return False
 
+    def initialize_model_settings():
+        if "model_provider" not in st.session_state:
+            st.session_state.model_provider = next(iter(MODEL_PROVIDERS))
+        provider_name = st.session_state.model_provider
+        if "keyword_model" not in st.session_state:
+            st.session_state.keyword_model = MODEL_PROVIDERS[provider_name]["models"][0]
+        if "api_key" not in st.session_state:
+            st.session_state.api_key = os.environ.get("OPENAI_API_KEY", "")
+
     # Initialize login session variables
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
-
-
-    st.set_page_config(page_title="Agent with MCP Tools", page_icon="🧠", layout="wide")
 
     # Existing page title and description
     st.title("💬 MCP Tool Utilization Agent")
@@ -115,6 +123,7 @@ def check_all_agent_app():
     if "thread_id" not in st.session_state:
         st.session_state.thread_id = random_uuid()
 
+    initialize_model_settings()
 
     # --- Function Definitions ---
     async def cleanup_mcp_client():
@@ -359,12 +368,20 @@ def check_all_agent_app():
             st.session_state.mcp_client = client
 
             # Initialize appropriate model based on selection
+            provider_name = st.session_state.model_provider
+            provider = MODEL_PROVIDERS.get(
+                provider_name,
+                MODEL_PROVIDERS[next(iter(MODEL_PROVIDERS))],
+            )
             selected_model = st.session_state.keyword_model
+            if selected_model not in provider["models"]:
+                selected_model = provider["models"][0]
+                st.session_state.keyword_model = selected_model
 
             model = ChatOpenAI(
                 model=selected_model,
                 temperature=0.1,
-                base_url=list(MODEL_PROVIDERS.keys())[0]["base_url"],
+                base_url=provider["base_url"],
                 api_key=st.session_state.api_key
             )
             agent = create_react_agent(
@@ -596,7 +613,7 @@ def check_all_agent_app():
         st.write(
             f"🛠️ MCP Tools Count: {st.session_state.get('tool_count', 'Initializing...')}"
         )
-        selected_model_name = st.session_state.selected_model
+        selected_model_name = st.session_state.get("keyword_model", "Unknown")
         st.write(f"🧠 Current Model: {selected_model_name}")
 
         # Move Apply Settings button here

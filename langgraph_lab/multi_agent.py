@@ -1,9 +1,14 @@
+import os
 from typing import Dict, Any
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage
 from openai import OpenAI
 
-client = OpenAI(api_key="", base_url="https://api.siliconflow.cn/v1")
+# 从环境变量获取 API Key，避免硬编码安全风险
+client = OpenAI(
+    api_key=os.getenv("SILICONFLOW_API_KEY", ""),
+    base_url="https://api.siliconflow.cn/v1"
+)
 
 def get_keywords_from_query(client, user_query: str, model_name) -> str:
     completion = client.chat.completions.create(

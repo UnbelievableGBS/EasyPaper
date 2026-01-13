@@ -488,6 +488,8 @@ def main():
             st.session_state.submitted = False  # 立即重置状态
             with st.spinner("正在分析您的需求..."):
                 client = get_openai_client()
+                if client is None:
+                    st.stop()
                 keywords = get_keywords_from_query(client, query, data_source)
                 st.write(f"📝 识别到的关键词: {', '.join(keywords)}")
 
@@ -869,7 +871,6 @@ def main():
                     if "last_file_hash" not in st.session_state or st.session_state.last_file_hash != current_file_hash:
                         st.session_state.last_file_hash = current_file_hash
                         st.session_state.upload_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        st.session_state.user_login = "123yxh"
 
                         # 存储所有上传的文件内容
                         st.session_state.all_pdf_contents = []
@@ -940,6 +941,8 @@ def main():
 
                         st.session_state.total_pages = len(PdfReader(uploaded_files[0]).pages)
                         # 更新系统提示
+                        if "messages" not in st.session_state or not st.session_state.messages:
+                            st.session_state.messages = [{"role": "system", "content": ""}]
                         if len(uploaded_files) == 1:
                             # 单篇文献时使用完整内容
                             st.session_state.messages[0]["content"] = (

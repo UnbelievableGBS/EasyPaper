@@ -6,6 +6,10 @@ def remove_duplicates(articles: List, data_source) -> List:
     articles: 文章列表
     data_source：文章来源
     """
+    allowed_sources = {"ArXiv", "IEEE", "SciHub"}
+    if data_source not in allowed_sources:
+        raise ValueError(f"未知的数据来源: {data_source}")
+
     seen = set()
     unique_articles = []
 

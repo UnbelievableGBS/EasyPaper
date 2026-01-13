@@ -240,7 +240,7 @@ def render_chat_area(middle_col, client, operation_type):
         current_prompt = f"{ACADEMIC_PROMPTS[operation_type]}\n\nPDF内容:\n{st.session_state.get('pdf_content', '')}"
         
         # 使用深层状态对比
-        if "messages" not in st.session_state or \
+        if "messages" not in st.session_state or not st.session_state.messages or \
            st.session_state.messages[0]["content"] != current_prompt:
             
             # 保留非系统消息的历史
